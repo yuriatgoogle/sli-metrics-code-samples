@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -34,8 +36,19 @@ func main() {
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
+	requestReceived := time.Now()
 	requestCount.Inc()
-	// start timer
-	// fail
-	fmt.Fprintf(w, "Hello")
+
+	// fail 10% of the time
+	if rand.Intn(100) > 90 {
+		failedRequestCount.Inc()
+		fmt.Fprintf(w, "error!")
+		responseLatency.Observe(time.Since(requestReceived).Seconds())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	} else {
+		time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
+		responseLatency.Observe(time.Since(requestReceived).Seconds())
+		fmt.Fprintf(w, "Hello")
+	}
 }
