@@ -45,12 +45,9 @@ def registerAllViews(view_manager):
 def setupOpenCensusAndPrometheusExporter():
     stats = stats_module.stats
     view_manager = stats.view_manager
-
     exporter = prometheus.new_stats_exporter(prometheus.Options(namespace="oc_python", port=8080))
-
     view_manager.register_exporter(exporter)
     registerAllViews(view_manager)
-
 
 
 app = Flask(__name__)
