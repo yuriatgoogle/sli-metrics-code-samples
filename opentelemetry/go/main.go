@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	env       = os.Getenv("ENV")
-	projectID = os.Getenv("PROJECT_ID")
+	env          = os.Getenv("ENV")
+	projectID    = os.Getenv("PROJECT_ID")
+	latencyValue = 0.0
 )
 
 func main() {
@@ -49,10 +50,17 @@ func main() {
 	totalRequestsCounter := metric.Must(meter).NewInt64Counter("total_requests")
 	// Register error counter
 	errorsCounter := metric.Must(meter).NewInt64Counter("failed_requests")
+	// Register latency observer
+	olabels := []label.KeyValue{}
+	callback := func(_ context.Context, result metric.Float64ObserverResult) {
+		v := latencyValue
+		result.Observe(v, olabels...)
+	}
+	metric.Must(meter).NewFloat64ValueObserver("response_latency", callback)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx, _ := tag.New(context.Background())
-		// requestReceived := time.Now()
+		requestReceived := time.Now()
 		// count the request
 		totalRequestsCounter.Add(ctx, 1)
 
@@ -62,12 +70,14 @@ func main() {
 			errorsCounter.Add(ctx, 1)
 			fmt.Fprintf(w, "error!")
 			// record latency for failure
+			latencyValue = float64(time.Since(requestReceived).Seconds())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		} else {
 			delay := time.Duration(rand.Intn(1000)) * time.Millisecond
 			time.Sleep(delay)
 			// record latency for success
+			latencyValue = float64(time.Since(requestReceived).Seconds())
 			fmt.Fprintf(w, "Responded after "+delay.String())
 		}
 	})
