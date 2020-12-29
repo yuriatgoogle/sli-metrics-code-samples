@@ -30,12 +30,8 @@ errors_counter = meter.create_counter(
     value_type=int,
 )
 # latency
-response_latency = meter.create_valuerecorder(
-    name="response_latency_python",
-    description="number of requests",
-    unit="ms",
-    value_type=int,
-)
+# waiting for https://github.com/GoogleCloudPlatform/opentelemetry-operations-python/issues/67 
+# to be resolved to use valuerecorder
 
 # define labels
 metric_labels = {}
@@ -52,7 +48,7 @@ def homePage():
     if random.randint(0, 100) > 90:
         errors_counter.add(1, metric_labels)
         latency = time.perf_counter() - start_time
-        response_latency.record(latency)
+        # response_latency.record(latency, metric_labels)
         return("error!", 500)
     else:
         random_delay = random.randint(0,5000)/1000
@@ -60,7 +56,7 @@ def homePage():
         time.sleep(random_delay)
         # record latency
         latency = time.perf_counter() - start_time
-        response_latency.record(latency, metric_labels)
+        # response_latency.record(latency, metric_labels)
         return ("Responding in " + str(latency) + "ms")
 
 if __name__ == '__main__':
