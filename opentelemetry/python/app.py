@@ -33,7 +33,6 @@ errors_counter = meter.create_counter(
 # waiting for https://github.com/GoogleCloudPlatform/opentelemetry-operations-python/issues/67 
 # to be resolved to use valuerecorder
 
-# define labels
 metric_labels = {}
 
 app = Flask(__name__)
@@ -48,7 +47,7 @@ def homePage():
     if random.randint(0, 100) > 90:
         errors_counter.add(1, metric_labels)
         latency = time.perf_counter() - start_time
-        # response_latency.record(latency, metric_labels)
+        # no way to record a histogram at present - see above
         return("error!", 500)
     else:
         random_delay = random.randint(0,5000)/1000
@@ -56,7 +55,7 @@ def homePage():
         time.sleep(random_delay)
         # record latency
         latency = time.perf_counter() - start_time
-        # response_latency.record(latency, metric_labels)
+        # no way to record a histogram at present - see above
         return ("Responding in " + str(latency) + "ms")
 
 if __name__ == '__main__':
